@@ -10,7 +10,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Search\Search.fsproj" />
     <ProjectReference Include="..\Index\Index.fsproj" />
   </ItemGroup>
 

@@ -2,8 +2,23 @@
 
 open System
 open Index.Writer
+open System.Linq
+
+let threeArg act second third =
+  match act with
+    | "index" -> indexDeepDirFiles second third
+    | _ -> printfn "failed command."
+
+let twoArg act second =
+  match act with
+    | "index" -> indexSingleFile second
+    | _ -> printfn "failed command."
+
 
 [<EntryPoint>]
 let main argv =
-  indexSingleFile argv.[0]
+  match argv.Length with
+    | 3 -> threeArg (argv.First()) argv.[1] argv.[2]
+    | 2 -> twoArg (argv.First()) argv.[1]
+    | _ -> printfn "failed length command"
   0 // return an integer exit code

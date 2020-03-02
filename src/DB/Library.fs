@@ -48,7 +48,7 @@ module Queries =
         let querySeqAsync:QuerySeqAsyncBuilder<Types.Text> =
           (querySeqAsync<Types.Text> con)
         querySeqAsync {
-          script "select filepath, contents, contents_hash as contentsHash from texts"
+          script "select id, filepath, contents, contents_hash as contentsHash from texts"
         }
     module Morphemes =
       let insertMorpheme con value =

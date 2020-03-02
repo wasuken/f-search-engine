@@ -1,5 +1,5 @@
 create table texts(
-	   id integer primary key,
+	   id integer primary key unique,
 	   filepath text not null unique,
 	   contents text not null,
 	   contents_hash text not null
