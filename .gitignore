@@ -1,0 +1,14 @@
+lib/debug
+lib/release
+Debug
+*.suo
+*.user
+obj
+bin
+*.exe
+.DS_Store
+.AppleDouble
+.LSOverride
+config.ini
+.ionide
+*.sqlite
