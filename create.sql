@@ -11,6 +11,8 @@ create table morphemes(
 create table text_morphemes(
 	   morpheme_id integer,
 	   text_id integer,
-	   count integer,
+	   score double,
+	   tf double,
+	   idf double,
 	   primary key(morpheme_id, text_id)
 );

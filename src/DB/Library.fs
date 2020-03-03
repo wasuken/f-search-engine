@@ -31,7 +31,9 @@ module Types =
     type TextMorpheme = {
       TextId: int64
       MorphemeId: int64
-      Count: int64
+      Tf: Double
+      Idf: Double
+      Score: Double
     }
 
 module Queries =
@@ -65,16 +67,23 @@ module Queries =
           script "select * from morphemes"
         }
     module TextMorphemes =
-      let insertTextMorpheme con tid mid cnt =
+      let insertTextMorpheme con tid mid score tf idf =
         let querySingleOptionAsync:QuerySingleOptionAsyncBuilder<Types.TextMorpheme> =
           (querySingleOptionAsync<Types.TextMorpheme> con)
         querySingleOptionAsync {
-          script "insert into text_morphemes(text_id, morpheme_id, count) values(@TextId, @MorphemeId, @Count)"
-          parameters (dict ["TextId", box tid; "MorphemeId", box mid; "Count", box cnt])
+          script "insert into text_morphemes(text_id, morpheme_id, score, tf, idf) values(@TextId, @MorphemeId, @Score, @Tf, @Idf)"
+          parameters (dict ["TextId", box tid; "MorphemeId", box mid; "Score", box score; "Tf", box tf; "Idf", box idf])
+        }
+      let updateTextMorpheme con tid mid score tf idf =
+        let querySingleOptionAsync:QuerySingleOptionAsyncBuilder<Types.TextMorpheme> =
+          (querySingleOptionAsync<Types.TextMorpheme> con)
+        querySingleOptionAsync {
+          script "update text_morphemes set text_id = @TextId, morpheme_id = @MorphemeId, score = @Score, tf = @Tf, idf = @Idf where text_id = @TextId and morpheme_id = @MorphemeId"
+          parameters (dict ["TextId", box tid; "MorphemeId", box mid; "Score", box score; "Tf", box tf; "Idf", box idf])
         }
       let listTextMorpheme con =
         let querySeqAsync:QuerySeqAsyncBuilder<Types.TextMorpheme> =
           (querySeqAsync<Types.TextMorpheme> con)
         querySeqAsync {
-          script "select text_id as textId, morpheme_id as morphemeId, count from text_morphemes"
+          script "select text_id as textId, morpheme_id as morphemeId, score, tf, idf from text_morphemes"
         }

@@ -21,4 +21,5 @@ let main argv =
     | 3 -> threeArg (argv.First()) argv.[1] argv.[2]
     | 2 -> twoArg (argv.First()) argv.[1]
     | _ -> printfn "failed length command"
+  scoreUpdate
   0 // return an integer exit code
