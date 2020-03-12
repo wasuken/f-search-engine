@@ -11,7 +11,7 @@ let threeArg act second third =
 
 let twoArg act second =
   match act with
-    | "index" -> indexSingleFile second
+    | "index" -> indexSingleFile second |> Async.RunSynchronously |> ignore
     | _ -> printfn "failed command."
 
 

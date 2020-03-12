@@ -22,28 +22,32 @@ module Writer =
   // Index process from single file.
   // Index data is into database.
   let indexSingleFile filepath =
-    let contents = File.ReadAllText(filepath)
-    let con = (fun unit -> DB.Connection.mkShared())
-    Queries.Texts.insertText con filepath contents |> Async.RunSynchronously |> ignore
-    let nouns = parseToNouns contents
-    for noun in nouns do
-      try
-        DB.Queries.Morphemes.insertMorpheme con noun |> Async.RunSynchronously |> ignore
-      with
+    async {
+      printfn "%s" filepath
+      let contents = File.ReadAllText(filepath)
+      let con = (fun unit -> DB.Connection.mkShared())
+      Queries.Texts.insertText con filepath contents |> Async.RunSynchronously |> ignore
+      let nouns = parseToNouns contents
+      for noun in nouns do
+        try
+          DB.Queries.Morphemes.insertMorpheme con noun |> Async.RunSynchronously |> ignore
+        with
         // Error shelving. evil.
         // I believe that exception other than does not Unique constraint
         // if you need debuging, this is insert it.
         // printfn "db error %s" (e.Message);
         | :? System.Exception -> ()
-    let morphemes = DB.Queries.Morphemes.listMorpheme con |> Async.RunSynchronously
-    let texts = DB.Queries.Texts.listText con |> Async.RunSynchronously
-    let text = texts |> Seq.find (fun (x:DB.Types.Text) -> x.Filepath.Equals(filepath))
-    for morp in morphemes do
-      let cnt = nouns |> Seq.filter (fun x -> x.Equals(morp.Value)) |> Seq.length
-      let tf = (double cnt) / (double (nouns.Count()))
-      DB.Queries.TextMorphemes.insertTextMorpheme con text.Id morp.Id 0.0 tf 0.0 |> Async.RunSynchronously
-    ()
+      let morphemes = DB.Queries.Morphemes.listMorpheme con |> Async.RunSynchronously
+      let texts = DB.Queries.Texts.listText con |> Async.RunSynchronously
+      let text = texts |> Seq.find (fun (x:DB.Types.Text) -> x.Filepath.Equals(filepath))
+      for morp in morphemes do
+        let cnt = nouns |> Seq.filter (fun x -> x.Equals(morp.Value)) |> Seq.length
+        let tf = (double cnt) / (double (nouns.Count()))
+        DB.Queries.TextMorphemes.insertTextMorpheme con text.Id morp.Id 0.0 tf 0.0 |> Async.RunSynchronously
+      ()
+    }
   let scoreUpdate =
+    printfn "calc score..."
     let con = (fun unit -> DB.Connection.mkShared())
     let morphemes = DB.Queries.Morphemes.listMorpheme con |> Async.RunSynchronously
     let texts = DB.Queries.Texts.listText con |> Async.RunSynchronously
@@ -66,14 +70,11 @@ module Writer =
                   Queries.TextMorphemes.updateTextMorpheme con tm.TextId tm.MorphemeId score tf idf |> Async.RunSynchronously |> ignore
                   None
             None
+    printfn "calc score..."
   // indexing file match the fileprn(pattern string) under the directory.
   let indexDeepDirFiles dirpath fileptn =
     let con = (fun unit -> DB.Connection.mkShared())
     let texts = DB.Queries.Texts.listText con |> Async.RunSynchronously
     let files = Directory.GetFiles(dirpath, fileptn, SearchOption.AllDirectories) |> Seq.filter (fun x -> (texts |> Seq.tryFind (fun y -> y.Filepath.Equals(x))).IsNone)
-    let mutable cnt = 1
     let max = files.Count()
-    for file in files do
-      indexSingleFile file
-      printfn "indexed %s, %d/%d" file cnt max
-      cnt <- cnt + 1
+    files.ToArray() |> Array.map indexSingleFile |> Async.Parallel |> Async.Ignore |> Async.RunSynchronously
